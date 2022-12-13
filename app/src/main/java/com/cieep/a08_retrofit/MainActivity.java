@@ -1,5 +1,6 @@
 package com.cieep.a08_retrofit;
 
+import android.content.DialogInterface;
 import android.hardware.camera2.TotalCaptureResult;
 import android.os.Bundle;
 
@@ -9,6 +10,7 @@ import com.cieep.a08_retrofit.conexiones.RetrofitObject;
 import com.cieep.a08_retrofit.modelos.Album;
 import com.google.android.material.snackbar.Snackbar;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -22,6 +24,7 @@ import com.cieep.a08_retrofit.databinding.ActivityMainBinding;
 
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -62,6 +65,74 @@ public class MainActivity extends AppCompatActivity {
         binding.fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                insertarAlbum().show();
+            }
+        });
+    }
+
+    private AlertDialog insertarAlbum() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Crear album");
+        EditText txtTitulo = new EditText(this);
+        builder.setView(txtTitulo);
+        builder.setCancelable(false);
+        builder.setNegativeButton("CANCELAR", null);
+        builder.setPositiveButton("INSERTAR", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if (!txtTitulo.getText().toString().isEmpty()) {
+                    Album a = new Album();
+                    a.setUserId(1);
+                    a.setTitulo(txtTitulo.getText().toString());
+                    doPostAlbum(a);
+                    // doPostAlbumForm(1, txtTitulo.getText().toString());
+                }
+            }
+        });
+        return builder.create();
+    }
+
+    private void doPostAlbumForm(int i, String toString) {
+        Retrofit retrofit = RetrofitObject.getConexion();
+        ApiConexiones api = retrofit.create(ApiConexiones.class);
+        Call<Album> postAlbum = api.postAlbumForm(i, toString);
+
+        postAlbum.enqueue(new Callback<Album>() {
+            @Override
+            public void onResponse(Call<Album> call, Response<Album> response) {
+                if (response.code() == HttpsURLConnection.HTTP_CREATED) {
+                    albums.add(0, response.body());
+                    adapter.notifyItemInserted(0);
+                }else {
+                    Toast.makeText(MainActivity.this, "NO INSERTADO", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Album> call, Throwable t) {
+
+            }
+        });
+    }
+
+    private void doPostAlbum(Album album) {
+        Retrofit retrofit = RetrofitObject.getConexion();
+        ApiConexiones api = retrofit.create(ApiConexiones.class);
+        Call<Album> postAlbum = api.postAlbum(album);
+
+        postAlbum.enqueue(new Callback<Album>() {
+            @Override
+            public void onResponse(Call<Album> call, Response<Album> response) {
+                if (response.code() == HttpsURLConnection.HTTP_CREATED) {
+                    albums.add(0, response.body());
+                    adapter.notifyItemInserted(0);
+                }else {
+                    Toast.makeText(MainActivity.this, "NO INSERTADO", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Album> call, Throwable t) {
 
             }
         });
